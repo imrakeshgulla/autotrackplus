@@ -1,0 +1,243 @@
+/* ========== Base ========== */
+:root{
+  --bg:#f6f7fb; --card:#fff; --ink:#0f172a; --muted:#7383a1;
+  --ring:#e5e7eb; --primary:#6366f1; --pill:#eef2ff; --danger:#ef4444;
+}
+:root[data-theme="dark"]{
+  --bg:#0b1220; --card:#0f172a; --ink:#e5e7eb; --muted:#9fb0cf;
+  --ring:#1f2a44; --primary:#7c83ff; --pill:#1e293b;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0; font-family:Inter,system-ui,Segoe UI,Roboto,Arial; color:var(--ink);
+  background:var(--bg);
+}
+
+/* ========== Topbar ========== */
+.topbar{
+  position:sticky; top:0; z-index:50;
+  display:flex; align-items:center; gap:12px;
+  padding:10px 14px; background:#0f172a; color:#fff;
+  box-shadow:0 6px 22px rgba(0,0,0,.18);
+}
+.topbar .logo strong{font-weight:700}
+.topbar .logo small{margin-left:8px; opacity:.8}
+.topbar .top-actions{margin-left:auto; display:flex; align-items:center; gap:8px}
+.pill{
+  display:inline-block; padding:6px 10px; border-radius:999px;
+  background:transparent; border:1px solid rgba(255,255,255,.15); color:#e5e7eb;
+  cursor:pointer; text-decoration:none;
+}
+.emp-chip{
+  padding:6px 10px; border-radius:999px;
+  background:rgba(99,102,241,.16); border:1px solid rgba(99,102,241,.35);
+  color:#e5e7eb; font-size:12px;
+}
+.btn{
+  display:inline-flex; align-items:center; justify-content:center;
+  height:38px; padding:0 12px; border-radius:10px; border:1px solid var(--ring);
+  background:#1f2937; color:#fff; text-decoration:none; cursor:pointer;
+}
+.btn-ghost{ background:transparent; color:var(--ink) }
+.btn-danger{ background:transparent; color:var(--danger); border-color:var(--danger) }
+.h-38{ height:38px }
+
+/* ========== Layout ========== */
+.container{ padding:16px }
+.mb-16{ margin-bottom:16px }
+.mt-12{ margin-top:12px }
+.mb-8{ margin-bottom:8px }
+
+/* cards / tiles */
+.tile{
+  background:var(--card); border:1px solid var(--ring); border-radius:14px; padding:12px;
+  box-shadow:0 10px 25px rgba(0,0,0,.06);
+}
+.counter{
+  background:var(--card); border:1px solid var(--ring); border-radius:14px; padding:16px;
+  box-shadow:0 10px 25px rgba(0,0,0,.06);
+}
+.small{ font-size:12px; color:var(--muted) }
+
+/* grid helpers */
+.grid{ display:grid; gap:14px }
+.grid-3{ grid-template-columns:repeat(3,1fr) }
+.grid.two{ grid-template-columns:300px 1fr }
+
+/* ========== Filters & Add Row ========== */
+.filters{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:12px }
+.input{
+  height:38px; padding:8px 10px; border-radius:10px; border:1px solid var(--ring);
+  background:var(--card); color:var(--ink); outline:none; min-width:260px;
+}
+.pills{ display:flex; gap:8px }
+.pills .pill{
+  background:var(--pill); border-color:#dbeafe; color:#1e293b; font-size:12px;
+}
+.pills .pill.active{ outline:2px solid #6366f1 }
+
+/* ENSURE DATE FIELDS LINE UP WITH OTHER INPUTS */
+.add-vehicle-row{ display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end; margin-bottom:12px }
+.field>label{ display:block; min-height:16px; color:var(--muted); font-size:12px; margin:0 0 4px }
+input[type="date"], select{ height:38px; padding:8px 10px; border:1px solid var(--ring); border-radius:10px; background:var(--card); color:var(--ink) }
+.w-200{width:200px}.w-170{width:170px}.w-140{width:140px}.w-110{width:110px}
+
+/* ========== Vehicles list ========== */
+.vehicles{ display:grid; gap:10px }
+.vehicle{
+  background:var(--card); border:1px solid var(--ring); border-radius:14px; padding:10px;
+  box-shadow:0 10px 25px rgba(0,0,0,.06)
+}
+.vehicle .small{ margin-top:2px }
+.row-actions{ display:flex; gap:8px; margin-top:8px }
+.badge{
+  display:inline-block; padding:4px 8px; border-radius:999px; font-size:12px;
+  border:1px solid #e5e7eb; background:#fff;
+}
+.badge[data-status="Completed"]{ background:#e7f8ee; border-color:#bce7d1; color:#166534 }
+.badge[data-status="Due Soon"]{ background:#eef6ff; border-color:#bfdcff; color:#1d4ed8 }
+.badge[data-status="Expired"]{ background:#fff1f2; border-color:#fecdd3; color:#b91c1c }
+
+/* ========== Detail panel ========== */
+.detail-head{ display:flex; align-items:center; justify-content:space-between; gap:12px }
+.metrics{ display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin:10px 0 }
+.metric{ background:var(--card); border:1px solid var(--ring); border-radius:14px; padding:12px }
+.metric .label{ font-size:12px; color:var(--muted) }
+
+.add-repair{ display:flex; gap:8px; align-items:center }
+.repair-list{ display:grid; gap:10px }
+.repair-row{
+  background:var(--card); border:1px solid var(--ring); border-radius:12px; padding:10px;
+  display:grid; grid-template-columns:1fr auto auto; gap:10px; align-items:center;
+}
+.repair-meta{ color:var(--muted); font-size:12px }
+.btn-danger{ border-color:#ef4444; color:#ef4444; background:transparent }
+
+/* empty */
+.empty{
+  color:var(--muted); border:1px dashed var(--ring); border-radius:12px;
+  padding:16px; text-align:center
+}
+
+/* responsive */
+@media (max-width: 1024px){
+  .grid.two{ grid-template-columns:1fr }
+}
+
+/* --- helpers (toast & dialog) --- */
+#toast-host { position: fixed; right: 16px; bottom: 16px; display: grid; gap: 8px; z-index: 9999; }
+.toast { opacity: 0; transform: translateY(8px); transition: .2s ease; background: var(--topbar); color: var(--text); border: 1px solid var(--muted); padding: 10px 12px; border-radius: 10px; box-shadow: 0 6px 16px rgba(0,0,0,.12); }
+.toast.show { opacity: 1; transform: translateY(0); }
+.toast.warn { background: #fff7e6; border-color: #ffe0a3; }
+
+#dialog .dlg-wrap { position: fixed; inset: 0; background: rgba(0,0,0,.22); display:flex; align-items:center; justify-content:center; z-index: 9998; }
+#dialog .dlg { width: min(480px, 92vw); background: var(--card); border: 1px solid var(--muted); border-radius: 16px; box-shadow: 0 10px 28px rgba(0,0,0,.18); overflow: hidden; }
+#dialog header { display:flex; align-items:center; justify-content:space-between; padding:12px 14px; border-bottom:1px solid var(--muted); }
+#dialog #dlg-body { padding: 14px; }
+.menu { margin: 0; padding-left: 18px; }
+.menu li { margin: 6px 0; }
+
+/* panel / repairs list */
+.vehicle-detail .vd-head { display:flex; gap:12px; align-items:center; justify-content:space-between; }
+.vehicle-detail .tile { background: var(--bg); border:1px dashed var(--muted); border-radius:12px; padding:12px; }
+.vehicle-detail .tile .label { font-size: 12px; color: var(--mutedText); }
+.vehicle-detail .tile .value { font-weight: 600; font-size: 18px; }
+.repairs { list-style: none; margin: 10px 0 0; padding: 0; display: grid; gap: 8px; }
+.repair { display:grid; grid-template-columns: 1fr auto auto auto; align-items:center; gap:10px; padding:10px 12px; border:1px solid var(--muted); border-radius:12px; background: var(--card); }
+.repair .tiny { padding: 4px 8px; font-size: 12px; }
+.pillbar { display:flex; gap:8px; margin: 6px 0 2px; }
+.pillbar .pill { border-radius:999px; padding:6px 10px; border:1px solid var(--muted); }
+.pillbar .pill.active { background: var(--chip); border-color: var(--chip); color: #fff; }
+
+/* put in public/assets/app.css if needed */
+.vehicle-card{
+  border:1px solid rgba(0,0,0,.06);
+  background:#fff;
+  padding:10px 12px;
+  border-radius:12px;
+  box-shadow: 0 2px 10px rgba(0,0,0,.03);
+}
+.vehicle-card.active{ outline: 2px solid #3b82f6; }
+.vehicle-card header{ display:flex; align-items:center; gap:8px; margin-bottom:4px; }
+.vehicle-card footer{ display:flex; gap:8px; margin-top:8px; }
+.panel{ background:#fff; border:1px dashed rgba(0,0,0,.1); border-radius:12px; padding:14px; min-height:220px; }
+.badge{ background:#eef2ff; color:#3b82f6; border-radius:999px; padding:2px 8px; font-size:12px; }
+.badge.green{ background:#eafff3; color:#10b981; }
+.pills .pill{ border:1px solid rgba(0,0,0,.08); background:#fff; border-radius:999px; padding:6px 10px; }
+.pills .pill.active{ background:#111827; color:#fff; border-color:#111827; }
+.input{ height:36px; border-radius:10px; border:1px solid rgba(0,0,0,.1); padding:0 10px; }
+.btn{ height:36px; border-radius:10px; background:#111827; color:#fff; padding:0 14px; border:none; }
+.btn-danger{ background:#ef4444; }
+.btn-secondary{ background:#374151; }
+.grid{ display:grid; }
+.grid-3{ grid-template-columns:repeat(3,minmax(0,1fr)); }
+.grid-5{ grid-template-columns:repeat(5,minmax(0,1fr)); }
+.row{ display:flex; }
+.flex{ flex:1; }
+.spacer{ height:12px; }
+.muted{ color:#6b7280; }
+
+/* ✅ ADDED AT BOTTOM — align add-vehicle dates + hide helper text */
+form[action$="add_vehicle.php"] .field .hint{
+  display: none !important;
+}
+form[action$="add_vehicle.php"] input[type="date"]{
+  height: 36px !important;
+  line-height: 36px !important;
+  padding: 0 10px !important;
+  box-sizing: border-box;
+}
+
+/* === Force date fields aligned and remove hint text === */
+form .field .hint {
+  display: none !important;
+}
+
+form input[type="date"] {
+  height: 36px !important;
+  line-height: 36px !important;
+  padding: 0 10px !important;
+  box-sizing: border-box;
+  vertical-align: middle;
+}
+/* === RAKESH FIX: Remove helper text + align add vehicle inputs === */
+form[action*="add_vehicle.php"] .field .hint {
+  display: none !important;
+}
+
+form[action*="add_vehicle.php"] {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+/* make all fields same height + alignment */
+form[action*="add_vehicle.php"] .field input[type="text"],
+form[action*="add_vehicle.php"] .field input[type="number"],
+form[action*="add_vehicle.php"] .field input[type="date"] {
+  height: 40px !important;
+  padding: 6px 10px;
+  box-sizing: border-box;
+}
+
+/* slightly reduce label spacing to tighten row */
+form[action*="add_vehicle.php"] .field label {
+  margin-bottom: 2px;
+}
+
+/* ensure “Add Vehicle” button aligns perfectly with input line */
+form[action*="add_vehicle.php"] button {
+  height: 40px !important;
+  margin-bottom: 0;
+}
+
+/* micro caption above compact inputs */
+.fieldcap{
+  display:block;
+  font-size:12px;
+  line-height:1.1;
+  color: var(--muted, #6b7280);
+  margin-bottom:4px;
+}
