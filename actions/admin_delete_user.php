@@ -1,6 +1,5 @@
 <?php
-require_once __DIR__ . '/../config/config.php'; require_auth();
-if ($_SESSION['user']['role'] !== 'admin'){ header('Location: ' . BASE_URL . '/public/login.php'); exit; }
+require_once __DIR__ . '/../config/config.php'; require_admin(); require_post_csrf();
 
 $id = (int)($_POST['id'] ?? 0);
 if ($id>0 && $id !== $_SESSION['user']['id']) {

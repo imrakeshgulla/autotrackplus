@@ -1,43 +1,35 @@
 <?php
-// config/config.php
-if (session_status() === PHP_SESSION_NONE) {
+// Environment overrides retain the existing local Docker defaults.
+define('BASE_URL', '/autotrackplus');
+define('REMINDER_DAYS', 14);
+define('APP_ENV', getenv('APP_ENV') ?: 'local');
+if (!in_array(APP_ENV, ['local', 'production'], true)) { http_response_code(500); exit('Invalid APP_ENV.'); }
+define('APP_URL', rtrim(getenv('APP_URL') ?: 'http://localhost:8080/autotrackplus', '/'));
+if (APP_ENV === 'production') {
+    foreach (['APP_URL','DB_HOST','DB_NAME','DB_USER','DB_PASSWORD','SMTP_HOST','SMTP_PORT','SMTP_USER','SMTP_PASSWORD','MAIL_FROM'] as $key) {
+        if (getenv($key) === false || getenv($key) === '') { http_response_code(500); exit('Missing production configuration: ' . $key); }
+    }
+    if (!filter_var(APP_URL, FILTER_VALIDATE_URL) || parse_url(APP_URL, PHP_URL_SCHEME) !== 'https' || parse_url(APP_URL, PHP_URL_PATH) !== BASE_URL || getenv('SMTP_TLS') !== '1' || !filter_var(getenv('MAIL_FROM'), FILTER_VALIDATE_EMAIL)) { http_response_code(500); exit('Invalid production HTTPS or email configuration.'); }
+}
+try {
+    $options = [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC, PDO::ATTR_EMULATE_PREPARES => false];
+    if ($ca = getenv('DB_SSL_CA')) { $options[PDO::MYSQL_ATTR_SSL_CA] = $ca; $options[PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT] = true; }
+    $pdo = new PDO('mysql:host=' . (getenv('DB_HOST') ?: 'db') . ';port=' . (getenv('DB_PORT') ?: '3306') . ';dbname=' . (getenv('DB_NAME') ?: 'autotrackplus') . ';charset=utf8mb4', getenv('DB_USER') ?: 'root', getenv('DB_PASSWORD') ?: '', $options);
+    $pdo->exec("SET time_zone = '+00:00'");
+} catch (Exception $e) {
+    http_response_code(500);
+    exit('Database unavailable. Check MySQL and the application configuration.');
+}
+if (PHP_SAPI !== 'cli' && session_status() === PHP_SESSION_NONE) {
+    ini_set('session.use_strict_mode', '1');
+    ini_set('session.use_only_cookies', '1');
+    session_set_cookie_params(['httponly' => true, 'secure' => str_starts_with(APP_URL, 'https://'), 'samesite' => 'Lax', 'path' => BASE_URL . '/']);
+    if (APP_ENV === 'production' || getenv('SESSION_DRIVER') === 'mysql') {
+        require_once __DIR__ . '/session_handler.php';
+        session_set_save_handler(new MysqlSessionHandler($pdo), true);
+    }
+    ini_set('session.gc_maxlifetime', '43200');
     session_start();
 }
-
-/* ---------- App base URL (folder under htdocs) ---------- */
-if (!defined('BASE_URL'))      define('BASE_URL', '/autotrackplus');
-if (!defined('REMINDER_DAYS')) define('REMINDER_DAYS', 14);  // FIX: was nested inside BASE_URL block
-
-/* ------------------ Database settings ------------------- */
-$DB_HOST = '127.0.0.1';
-$DB_PORT = '3306';
-$DB_NAME = 'autotrackplus';   // FIX: was 'autotrack' in schema, now consistent
-$DB_USER = 'root';
-$DB_PASS = '';                 // set if your root user has a password
-
-try {
-  $dsn = "mysql:host={$DB_HOST};port={$DB_PORT};dbname={$DB_NAME};charset=utf8mb4";
-  $pdo = new PDO($dsn, $DB_USER, $DB_PASS, [
-    PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
-    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-  ]);
-} catch (Exception $e) {
-  http_response_code(500);
-  exit('DB connection failed. Make sure MySQL is running and the database exists.');
-}
-
-/* -------------------- Auth helper ----------------------- */
-function require_auth() {
-  if (!isset($_SESSION['user'])) {
-    header('Location: ' . BASE_URL . '/public/login.php');
-    exit;
-  }
-}
-
-/* ------------------- Simple mailer ---------------------- */
-function send_mail($to, $subject, $body) {
-  $headers  = "MIME-Version: 1.0\r\n";
-  $headers .= "Content-type:text/html;charset=UTF-8\r\n";
-  $headers .= "From: AutoTrack+ <no-reply@autotrack.local>\r\n";
-  @mail($to, $subject, $body, $headers);
-}
+require_once __DIR__ . '/security.php';
+require_once __DIR__ . '/mailer.php';

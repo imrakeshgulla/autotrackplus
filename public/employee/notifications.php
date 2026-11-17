@@ -1,5 +1,4 @@
 <?php
-if (session_status() === PHP_SESSION_NONE) { session_start(); }
 require_once __DIR__ . '/../../config/config.php';
 require_auth();
 
@@ -67,7 +66,7 @@ $notifications = $stmt->fetchAll();
               </div>
             </div>
             <?php if (!$n['read_at']): ?>
-              <form method="post" action="<?= BASE_URL ?>/actions/notify_mark_read.php">
+              <form method="post" action="<?= BASE_URL ?>/actions/notify_mark_read.php"><?= csrf_field() ?>
                 <input type="hidden" name="id" value="<?= $n['id'] ?>">
                 <button class="btn-sm">Dismiss</button>
               </form>

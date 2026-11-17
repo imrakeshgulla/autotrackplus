@@ -1,0 +1,5 @@
+# The repository is mounted under Apache for the existing local layout.
+RedirectMatch 404 "(?i)/(?:config|sql|bin|tests|docker|\.git)(?:/|$)"
+<FilesMatch "(?i)^(?:\..*|Dockerfile|compose\.yaml|README\.md|SECURITY-SETUP\.md)$">
+    Require all denied
+</FilesMatch>

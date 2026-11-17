@@ -14,6 +14,10 @@ CREATE TABLE IF NOT EXISTS users (
   role         ENUM('employee','admin') NOT NULL DEFAULT 'employee',
   is_verified  TINYINT(1)   NOT NULL DEFAULT 0,
   verify_token CHAR(36)     DEFAULT NULL,
+  password_hash VARCHAR(255) DEFAULT NULL,
+  password_changed_at DATETIME DEFAULT NULL,
+  password_setup_authorized_at DATETIME DEFAULT NULL,
+  session_version INT NOT NULL DEFAULT 0,
   created_at   TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
   UNIQUE KEY uq_email(email),
   UNIQUE KEY uq_emp(emp_code),
@@ -73,3 +77,22 @@ CREATE TABLE IF NOT EXISTS activity_log (
 INSERT INTO users (first_name, last_name, email, emp_code, role, is_verified)
 VALUES ('System', 'Admin', 'admin@example.com', '999999', 'admin', 1)
 ON DUPLICATE KEY UPDATE email = email;
+
+-- Password support for fresh installations; existing volumes use bin/migrate.php.
+CREATE TABLE IF NOT EXISTS password_tokens (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT NOT NULL,
+  token_hash CHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL UNIQUE,
+  purpose ENUM('password') NOT NULL,
+  expires_at DATETIME NOT NULL,
+  consumed_at DATETIME DEFAULT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  INDEX ix_password_token_user (user_id),
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+CREATE TABLE IF NOT EXISTS auth_rate_limits (
+  bucket CHAR(64) CHARACTER SET ascii COLLATE ascii_bin PRIMARY KEY,
+  attempts INT UNSIGNED NOT NULL,
+  expires_at DATETIME NOT NULL,
+  INDEX ix_rate_expiry (expires_at)
+) ENGINE=InnoDB;

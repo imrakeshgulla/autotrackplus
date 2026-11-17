@@ -1,7 +1,6 @@
 <?php
-if (session_status() === PHP_SESSION_NONE) { session_start(); }
 require_once __DIR__ . '/../config/config.php';
-require_auth();
+require_auth(); require_post_csrf();
 
 $id = (int)($_POST['id'] ?? 0);
 if ($id > 0) {

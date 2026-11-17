@@ -1,9 +1,7 @@
 <?php
-if (session_status() === PHP_SESSION_NONE) { session_start(); }
 require_once __DIR__ . '/../../config/config.php';
 require_auth();
 
-function h($s) { return htmlspecialchars(isset($s) ? $s : '', ENT_QUOTES, 'UTF-8'); }
 function nice($d) { $t = strtotime($d); return $t ? date('M j, Y', $t) : '—'; }
 
 $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
@@ -79,7 +77,7 @@ $repairs = $repStmt->fetchAll();
       </div>
 
       <!-- Add repair form -->
-      <form method="post" action="<?= BASE_URL ?>/actions/add_repair.php" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
+      <form method="post" action="<?= BASE_URL ?>/actions/add_repair.php" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px"><?= csrf_field() ?>
         <input type="hidden" name="vehicle_id" value="<?= $veh['id'] ?>">
         <input class="input" name="note" placeholder="e.g., Brake pads replaced" required style="flex:1;min-width:200px">
         <select class="input" name="tag" style="width:140px">
@@ -104,7 +102,7 @@ $repairs = $repStmt->fetchAll();
             </div>
             <div style="display:flex;align-items:center;gap:8px">
               <span class="badge-tag <?= $tagClass ?>"><?= h($r['tag']) ?></span>
-              <form method="post" action="<?= BASE_URL ?>/actions/delete_repair.php" onsubmit="return confirm('Delete this repair?')">
+              <form method="post" action="<?= BASE_URL ?>/actions/delete_repair.php" onsubmit="return confirm('Delete this repair?')"><?= csrf_field() ?>
                 <input type="hidden" name="id" value="<?= $r['id'] ?>">
                 <button class="btn-del" type="submit">Delete</button>
               </form>

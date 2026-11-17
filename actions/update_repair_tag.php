@@ -1,7 +1,7 @@
 <?php
 // actions/update_repair_tag.php
 require_once __DIR__ . '/../config/config.php';
-require_auth();
+require_auth(); require_post_csrf();
 
 if (($_SESSION['user']['role'] ?? '') !== 'employee') {
   http_response_code(403);
@@ -27,8 +27,7 @@ if (!$userId || !$repairId || !in_array($tag, $allowed, true)) {
 $sql = "UPDATE repairs r
         JOIN vehicles v ON v.id = r.vehicle_id
         SET r.tag = ?
-        WHERE r.id = ? AND v.user_id = ?
-        LIMIT 1";
+        WHERE r.id = ? AND v.user_id = ?";
 
 $ok = $pdo->prepare($sql)->execute([$tag, $repairId, $userId]);
 

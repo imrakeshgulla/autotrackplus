@@ -1,0 +1,7 @@
+.git
+.env
+.env.*
+!.env.example
+*.sql.dump
+*.sql.gz
+node_modules

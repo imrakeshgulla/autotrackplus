@@ -474,12 +474,12 @@ try {
   <div class="form-side">
     <div class="form-box">
       <div class="form-title">Employee login</div>
-      <div class="form-sub">Enter your 6-digit employee code to continue.</div>
+      <div class="form-sub">Enter your employee code and password.</div>
 
       <?php if (!empty($_GET['err'])): ?>
         <div class="error-msg">
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" stroke="#f87171" stroke-width="1.5"/><path d="M8 5v3.5M8 10.5v.5" stroke="#f87171" stroke-width="1.5" stroke-linecap="round"/></svg>
-          Invalid or unverified employee code.
+          Invalid employee code or password, or account unavailable.
         </div>
       <?php endif; ?>
 
@@ -491,6 +491,7 @@ try {
       <?php endif; ?>
 
       <form method="post" action="<?php echo BASE_URL; ?>/actions/auth_login.php" id="login-form">
+        <?= csrf_field() ?>
         <label class="field-label" for="emp_code">Employee code</label>
         <input
           class="code-input"
@@ -501,17 +502,21 @@ try {
           pattern="\d{6}"
           placeholder="······"
           inputmode="numeric"
-          autocomplete="off"
+          autocomplete="username"
           autofocus
           required
         >
         <div class="code-hint">6 digits, numbers only</div>
+        <label class="field-label" for="password">Password</label>
+        <input class="input" type="password" id="password" name="password" autocomplete="current-password" maxlength="128" required style="width:100%;margin-bottom:24px">
 
         <button class="submit-btn" type="submit" id="submit-btn">
           Continue <span class="arrow-icon">→</span>
         </button>
       </form>
 
+      <?php if (($_GET['msg'] ?? '') === 'password-set'): ?><p>Password saved. Sign in with your employee code and password.</p><?php endif; ?>
+      <p class="register-link"><a href="<?= BASE_URL ?>/public/request-password.php">Set or reset password</a></p>
       <div class="register-link">
         No account? <a href="<?php echo BASE_URL; ?>/public/register.php">Request access</a>
       </div>

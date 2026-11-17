@@ -1,7 +1,6 @@
 <?php
-if (session_status() === PHP_SESSION_NONE) { session_start(); }
 require_once __DIR__ . '/../config/config.php';
-require_auth();
+require_auth(); require_post_csrf();
 
 $userId          = $_SESSION['user']['id'];
 $make_model      = trim($_POST['make_model'] ?? '');

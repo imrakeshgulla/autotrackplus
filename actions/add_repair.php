@@ -1,7 +1,6 @@
 <?php
-if (session_status() === PHP_SESSION_NONE) { session_start(); } // FIX: was missing
 require_once __DIR__ . '/../config/config.php';
-require_auth();
+require_auth(); require_post_csrf();
 
 $vid  = (int)($_POST['vehicle_id'] ?? 0);
 $note = trim($_POST['note'] ?? '');

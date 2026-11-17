@@ -1,0 +1,32 @@
+services:
+  app:
+    build: .
+    working_dir: /var/www/html/autotrackplus
+    ports:
+      - "127.0.0.1:8080:80"
+    volumes:
+      - .:/var/www/html/autotrackplus
+    environment:
+      APP_URL: http://localhost:8080/autotrackplus
+      SMTP_HOST: mailpit
+      SMTP_PORT: "1025"
+    depends_on:
+      - db
+      - mailpit
+
+  db:
+    image: mysql:8.0
+    environment:
+      MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+      MYSQL_ROOT_HOST: "%"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./sql/schema.sql:/docker-entrypoint-initdb.d/schema.sql:ro
+
+  mailpit:
+    image: axllent/mailpit:v1.27.10
+    ports:
+      - "127.0.0.1:8025:8025"
+
+volumes:
+  mysql_data:

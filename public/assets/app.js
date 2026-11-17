@@ -230,7 +230,7 @@
       const res = await fetch(`${BASE_URL}/actions/remove_vehicle.php`, {
         method: 'POST',
         headers: {'Content-Type':'application/x-www-form-urlencoded'},
-        body: `id=${encodeURIComponent(id)}`
+        body: `id=${encodeURIComponent(id)}&csrf=${encodeURIComponent(window.CSRF_TOKEN || "")}`
       });
       if (res.ok) {
         $(`.vehicle-card[data-id="${id}"]`)?.remove();

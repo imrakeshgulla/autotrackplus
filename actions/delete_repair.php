@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__ . '/../config/config.php'; require_auth();
+require_once __DIR__ . '/../config/config.php'; require_auth(); require_post_csrf();
 $id = (int)($_POST['id'] ?? 0);
 if ($id > 0) {
   // Only allow delete if the repair belongs to one of the current user's vehicles

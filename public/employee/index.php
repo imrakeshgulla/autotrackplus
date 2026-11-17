@@ -174,7 +174,7 @@ function avatarStyle(string $status, int $i, array $p): array {
             </div>
             <div class="repair-meta">Due on <?php echo htmlspecialchars($n['due_on']); ?></div>
           </div>
-          <form method="post" action="<?php echo BASE_URL; ?>/actions/notify_mark_read.php">
+          <form method="post" action="<?php echo BASE_URL; ?>/actions/notify_mark_read.php"><?= csrf_field() ?>
             <input type="hidden" name="id" value="<?php echo $n['id']; ?>">
             <button class="btn btn--primary" style="width:auto">Dismiss</button>
           </form>
@@ -183,7 +183,7 @@ function avatarStyle(string $status, int $i, array $p): array {
     </div>
 
     <span class="badge" id="emp-badge">Emp Code: <?php echo htmlspecialchars($_SESSION['user']['emp_code'] ?? '—'); ?></span>
-    <a href="<?php echo BASE_URL; ?>/public/logout.php" class="btn btn--primary" style="text-decoration:none">Logout</a>
+    <form method="post" action="<?= BASE_URL ?>/public/logout.php" style="display:inline"><?= csrf_field() ?><button type="submit" class="btn btn--primary">Logout</button></form>
   </div>
 </div>
 
@@ -247,7 +247,7 @@ function avatarStyle(string $status, int $i, array $p): array {
       </div>
     </div>
 
-    <form method="post" action="<?php echo BASE_URL; ?>/actions/add_vehicle.php" class="quick-add">
+    <form method="post" action="<?php echo BASE_URL; ?>/actions/add_vehicle.php" class="quick-add"><?= csrf_field() ?>
       <input class="input" name="make_model" placeholder="Make & Model" required>
       <input class="input" name="year" placeholder="Year" type="number" required>
       <input class="input" name="plate" placeholder="Plate" required>
@@ -297,7 +297,7 @@ function avatarStyle(string $status, int $i, array $p): array {
 
             <div style="display:flex;gap:8px;margin-top:10px">
               <form method="post" action="<?php echo BASE_URL; ?>/actions/remove_vehicle.php"
-                onsubmit="return confirm('Remove this vehicle and all its repairs?')">
+                onsubmit="return confirm('Remove this vehicle and all its repairs?')"><?= csrf_field() ?>
                 <input type="hidden" name="id" value="<?php echo $v['id']; ?>">
                 <button class="btn btn--danger" style="width:auto">Remove</button>
               </form>
@@ -317,9 +317,10 @@ function avatarStyle(string $status, int $i, array $p): array {
 </div>
 
 <script>
+window.CSRF_TOKEN = <?= json_encode(csrf_token()) ?>;
 const BASE_URL = '<?php echo BASE_URL; ?>';
-const vehicles = <?php echo json_encode($vehicles); ?>;
-const repairsByVehicle = <?php echo json_encode($repByVeh); ?>;
+const vehicles = <?php echo json_encode($vehicles, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
+const repairsByVehicle = <?php echo json_encode($repByVeh, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
 
 const PALETTES = [
   {bg:'#e0f2fe',color:'#0369a1'},{bg:'#fce7f3',color:'#9d174d'},
@@ -376,7 +377,7 @@ function repairItem(r) {
       <div class="repair-title">${escapeHtml(r.note)} <span class="badge" style="margin-left:6px">${r.tag}</span></div>
       <div class="repair-meta">${stamp}</div>
     </div>
-    <form class="js-update-tag" method="post" action="${BASE_URL}/actions/update_repair_tag.php" style="display:flex;gap:6px;align-items:center">
+    <form class="js-update-tag" method="post" action="${BASE_URL}/actions/update_repair_tag.php" style="display:flex;gap:6px;align-items:center"><?= csrf_field() ?>
       <input type="hidden" name="id" value="${r.id}">
       <select class="tag-select input" name="tag" style="width:120px">
         <option ${r.tag==='Due Soon'?'selected':''}>Due Soon</option>
@@ -384,7 +385,7 @@ function repairItem(r) {
         <option ${r.tag==='Completed'?'selected':''}>Completed</option>
       </select>
     </form>
-    <form method="post" action="${BASE_URL}/actions/delete_repair.php" onsubmit="return confirm('Delete this repair?');">
+    <form method="post" action="${BASE_URL}/actions/delete_repair.php" onsubmit="return confirm('Delete this repair?');"><?= csrf_field() ?>
       <input type="hidden" name="id" value="${r.id}">
       <button class="btn btn--danger" style="width:auto">Delete</button>
     </form>
@@ -414,7 +415,7 @@ function selectVehicle(id) {
       <div class="metric"><div class="label">Next Service</div><h2>${v.next_service||'—'}</h2></div>
       <div class="metric"><div class="label">Miles Left</div><h2>${Number(v.miles_left).toLocaleString()}</h2></div>
     </div>
-    <form method="post" action="${BASE_URL}/actions/add_repair.php" style="display:flex;gap:8px;align-items:center">
+    <form method="post" action="${BASE_URL}/actions/add_repair.php" style="display:flex;gap:8px;align-items:center"><?= csrf_field() ?>
       <input type="hidden" name="vehicle_id" value="${v.id}">
       <input class="input" name="note" placeholder="e.g., Brake pads" required>
       <select class="input" name="tag"><option>Due Soon</option><option>Expired</option><option>Completed</option></select>
@@ -475,7 +476,7 @@ function wireInline(){
       el.style.outline='2px dashed transparent';
       const id=el.dataset.id,field=el.dataset.field,value=el.textContent.trim();
       try{
-        const fd=new FormData();fd.append('id',id);fd.append('field',field);fd.append('value',value);
+        const fd=new FormData();fd.append('id',id);fd.append('field',field);fd.append('value',value);fd.append('csrf',<?= json_encode(csrf_token()) ?>);
         const res=await fetch(`${BASE_URL}/actions/update_vehicle_field.php`,{method:'POST',body:fd,credentials:'same-origin'});
         if(!res.ok)throw 0; toast('Saved','ok');
       }catch{toast('Save failed','err');}

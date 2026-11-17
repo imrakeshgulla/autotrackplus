@@ -1,2 +1,27 @@
-config/config.php
-sql/schema.sql
+# Local credentials and environment overrides
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Database exports and backups; application schemas and migrations are source.
+*.sql
+!sql/schema.sql
+!sql/migrations/*.sql
+*.sql.gz
+*.sql.dump
+*.dump
+*.bak
+*.backup
+*.sqlite
+*.sqlite3
+*.db
+backups/
+
+# Local runtime output and OS files
+*.log
+.DS_Store
+node_modules/

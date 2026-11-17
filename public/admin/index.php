@@ -2,7 +2,7 @@
 require_once __DIR__ . '/../../config/config.php'; require_auth();
 if ($_SESSION['user']['role'] !== 'admin'){ header('Location: ' . BASE_URL . '/public/employee/index.php'); exit; }
 
-$users = $pdo->query("SELECT id,first_name,last_name,email,emp_code,role,is_verified,created_at 
+$users = $pdo->query("SELECT id,first_name,last_name,email,emp_code,role,is_verified,password_hash,created_at
                       FROM users ORDER BY created_at DESC")->fetchAll();
 $vehicles = $pdo->query("SELECT v.*, CONCAT(u.first_name,' ',u.last_name) AS owner 
                          FROM vehicles v JOIN users u ON u.id=v.user_id ORDER BY v.id DESC")->fetchAll();
@@ -18,16 +18,17 @@ $vehicles = $pdo->query("SELECT v.*, CONCAT(u.first_name,' ',u.last_name) AS own
 <div class="topbar">
   <strong>Admin Panel</strong>
   <div style="margin-left:auto">
-    <a href="<?php echo BASE_URL; ?>/public/logout.php" style="color:#fff;background:#334155;padding:6px 10px;border-radius:8px;text-decoration:none">Logout</a>
+    <form method="post" action="<?= BASE_URL ?>/public/logout.php" style="display:inline"><?= csrf_field() ?><button type="submit" style="color:#fff;background:#334155;padding:6px 10px;border:0;border-radius:8px;cursor:pointer">Logout</button></form>
   </div>
 </div>
 
 <div style="padding:18px" class="grid">
 
+  <?php if (isset($_SESSION['admin_message'])): ?><p role="status"><?= h($_SESSION['admin_message']) ?></p><?php unset($_SESSION['admin_message']); endif; ?>
   <!-- Add Employee -->
   <div class="tile">
     <h2 style="margin:0 0 10px">Add Employee</h2>
-    <form method="post" action="<?php echo BASE_URL; ?>/actions/admin_add_user.php" style="display:flex;gap:8px;flex-wrap:wrap">
+    <form method="post" action="<?php echo BASE_URL; ?>/actions/admin_add_user.php" style="display:flex;gap:8px;flex-wrap:wrap"><?= csrf_field() ?>
       <input class="input" name="first_name" placeholder="First name" required style="flex:1 1 160px">
       <input class="input" name="last_name" placeholder="Last name" required style="flex:1 1 160px">
       <input class="input" type="email" name="email" placeholder="Email" required style="flex:2 1 240px">
@@ -36,7 +37,7 @@ $vehicles = $pdo->query("SELECT v.*, CONCAT(u.first_name,' ',u.last_name) AS own
         <option value="employee">employee</option>
         <option value="admin">admin</option>
       </select>
-      <button class="btn" style="width:auto">Create</button>
+      <label><input type="checkbox" name="confirm_identity" required> I confirmed this employee’s identity and email.</label><button class="btn" style="width:auto">Create and invite</button>
     </form>
   </div>
 
@@ -51,11 +52,16 @@ $vehicles = $pdo->query("SELECT v.*, CONCAT(u.first_name,' ',u.last_name) AS own
             <span class="badge"><?php echo $u['role']; ?></span>
             <div style="font-size:12px;color:#6b7280">
               Emp: <?php echo $u['emp_code']; ?> • <?php echo htmlspecialchars($u['email']); ?> • 
-              <?php echo $u['is_verified']?'Verified':'Pending'; ?>
+              <?php echo $u['is_verified']?'Active':'Disabled'; ?> • <?= $u['password_hash'] ? 'Password set' : 'Password setup needed' ?>
             </div>
           </div>
           <div style="display:flex;gap:6px">
-            <form method="post" action="<?php echo BASE_URL; ?>/actions/admin_toggle_verify.php">
+            <form method="post" action="<?= BASE_URL ?>/actions/admin_invite_user.php"><?= csrf_field() ?>
+              <input type="hidden" name="id" value="<?= (int)$u['id'] ?>">
+              <label><input type="checkbox" name="confirm_identity" required> Identity and listed email confirmed</label>
+              <button class="btn">Send password invitation</button>
+            </form>
+            <form method="post" action="<?php echo BASE_URL; ?>/actions/admin_toggle_verify.php"><?= csrf_field() ?>
               <input type="hidden" name="id" value="<?php echo $u['id']; ?>">
               <input type="hidden" name="to" value="<?php echo $u['is_verified']?0:1; ?>">
               <button class="btn" style="width:auto;background:#0ea5e9">
@@ -63,7 +69,7 @@ $vehicles = $pdo->query("SELECT v.*, CONCAT(u.first_name,' ',u.last_name) AS own
               </button>
             </form>
             <?php if ($u['id'] !== $_SESSION['user']['id']): ?>
-            <form method="post" action="<?php echo BASE_URL; ?>/actions/admin_delete_user.php" onsubmit="return confirm('Delete this user? This cannot be undone.')">
+            <form method="post" action="<?php echo BASE_URL; ?>/actions/admin_delete_user.php" onsubmit="return confirm('Delete this user? This cannot be undone.')"><?= csrf_field() ?>
               <input type="hidden" name="id" value="<?php echo $u['id']; ?>">
               <button class="btn" style="width:auto;background:#ef4444">Delete</button>
             </form>
@@ -89,7 +95,7 @@ $vehicles = $pdo->query("SELECT v.*, CONCAT(u.first_name,' ',u.last_name) AS own
           <strong><?php echo htmlspecialchars($v['make_model']); ?> (<?php echo $v['year']; ?>)</strong>
           <span class="badge" style="float:right"><?php echo $v['status']; ?></span>
           <div style="font-size:12px;color:#6b7280">
-            Owner: <?php echo htmlspecialchars($v['owner']); ?> • Plate: <?php echo $v['plate']; ?> • Next: <?php echo $v['next_service']; ?>
+            Owner: <?php echo htmlspecialchars($v['owner']); ?> • Plate: <?php echo h($v['plate']); ?> • Next: <?php echo $v['next_service']; ?>
           </div>
         </div>
       <?php endforeach; ?>
