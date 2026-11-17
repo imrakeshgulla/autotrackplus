@@ -6,10 +6,10 @@ define('APP_ENV', getenv('APP_ENV') ?: 'local');
 if (!in_array(APP_ENV, ['local', 'production'], true)) { http_response_code(500); exit('Invalid APP_ENV.'); }
 define('APP_URL', rtrim(getenv('APP_URL') ?: 'http://localhost:8080/autotrackplus', '/'));
 if (APP_ENV === 'production') {
-    foreach (['APP_URL','DB_HOST','DB_NAME','DB_USER','DB_PASSWORD','SMTP_HOST','SMTP_PORT','SMTP_USER','SMTP_PASSWORD','MAIL_FROM'] as $key) {
+    foreach (['APP_URL','DB_HOST','DB_NAME','DB_USER','DB_PASSWORD','BREVO_API_KEY','MAIL_FROM'] as $key) {
         if (getenv($key) === false || getenv($key) === '') { http_response_code(500); exit('Missing production configuration: ' . $key); }
     }
-    if (!filter_var(APP_URL, FILTER_VALIDATE_URL) || parse_url(APP_URL, PHP_URL_SCHEME) !== 'https' || parse_url(APP_URL, PHP_URL_PATH) !== BASE_URL || getenv('SMTP_TLS') !== '1' || !filter_var(getenv('MAIL_FROM'), FILTER_VALIDATE_EMAIL)) { http_response_code(500); exit('Invalid production HTTPS or email configuration.'); }
+    if (!filter_var(APP_URL, FILTER_VALIDATE_URL) || parse_url(APP_URL, PHP_URL_SCHEME) !== 'https' || parse_url(APP_URL, PHP_URL_PATH) !== BASE_URL || preg_match('/[\r\n]/', getenv('BREVO_API_KEY')) || !filter_var(getenv('MAIL_FROM'), FILTER_VALIDATE_EMAIL)) { http_response_code(500); exit('Invalid production HTTPS or email configuration.'); }
 }
 try {
     $options = [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC, PDO::ATTR_EMULATE_PREPARES => false];

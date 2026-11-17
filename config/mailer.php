@@ -1,6 +1,16 @@
 <?php
 // SMTP transport: local Mailpit by default in Compose; TLS and credentials configurable.
 function send_mail(string $to, string $subject, string $body): void {
+    $environment = defined('APP_ENV') ? APP_ENV : (getenv('APP_ENV') ?: 'local');
+    if ($environment === 'production') {
+        send_brevo_mail($to, $subject, $body);
+        return;
+    }
+    send_smtp_mail($to, $subject, $body);
+}
+
+// Local SMTP transport, normally routed to Mailpit by Docker Compose.
+function send_smtp_mail(string $to, string $subject, string $body): void {
     $host = getenv('SMTP_HOST');
     if (!$host) throw new RuntimeException('SMTP_HOST is not configured.');
     $port = (int)(getenv('SMTP_PORT') ?: 1025);
@@ -34,4 +44,42 @@ function send_mail(string $to, string $subject, string $body): void {
         // A message acknowledged with 250 has been accepted even if QUIT fails.
         try { $command('QUIT', [221]); } catch (RuntimeException $e) { /* already accepted */ }
     } finally { fclose($socket); }
+}
+
+// $request is injectable to test the API contract without contacting Brevo.
+function send_brevo_mail(string $to, string $subject, string $body, ?callable $request = null): void {
+    $apiKey = getenv('BREVO_API_KEY') ?: '';
+    $from = getenv('MAIL_FROM') ?: '';
+    if ($apiKey === '' || preg_match('/[\r\n]/', $apiKey)) throw new RuntimeException('Brevo API key is missing or invalid.');
+    if (!filter_var($to, FILTER_VALIDATE_EMAIL) || !filter_var($from, FILTER_VALIDATE_EMAIL) || preg_match('/[\r\n]/', $to . $from . $subject)) throw new RuntimeException('Invalid email headers.');
+    $payload = json_encode([
+        'sender' => ['name' => 'AutoTrackPlus', 'email' => $from],
+        'to' => [['email' => $to]],
+        'subject' => $subject,
+        'htmlContent' => $body,
+    ], JSON_THROW_ON_ERROR);
+    $request ??= 'brevo_https_request';
+    $status = $request($apiKey, $payload);
+    if (!is_int($status) || $status < 200 || $status >= 300) {
+        // Never include the API response, request headers, key, or message content in logs/errors.
+        throw new RuntimeException('Brevo email delivery failed.');
+    }
+}
+
+function brevo_https_request(string $apiKey, string $payload): int {
+    $context = stream_context_create([
+        'http' => [
+            'method' => 'POST',
+            'header' => "Content-Type: application/json\r\nAccept: application/json\r\napi-key: " . $apiKey . "\r\n",
+            'content' => $payload,
+            'timeout' => 10,
+            'ignore_errors' => true,
+            'follow_location' => 0,
+        ],
+        'ssl' => ['verify_peer' => true, 'verify_peer_name' => true],
+    ]);
+    // Suppress transport warnings, which could expose request details; report a generic failure.
+    $result = @file_get_contents('https://api.brevo.com/v3/smtp/email', false, $context);
+    if ($result === false || empty($http_response_header[0]) || !preg_match('/^HTTP\/\S+ (\d{3})\b/', $http_response_header[0], $matches)) return 0;
+    return (int)$matches[1];
 }

@@ -23,7 +23,7 @@ For local testing, issue an invitation to the seeded address (Mailpit captures i
 
 ```sh
 docker compose exec app php bin/issue-password-setup.php \
-  --code --email=admin@example.com --confirm-identity
+  --code=999999 --email=admin@example.com --confirm-identity
 ```
 
 Open http://localhost:8025, open the setup email, and follow its link. Choose and confirm a unique password of 15–128 characters. Return to the login page and sign in with `999999` and that password. The link expires after 30 minutes and works once; rerun the command if needed. No password is printed, emailed, or stored in plaintext.
@@ -44,9 +44,17 @@ Mailpit accepts SMTP at `mailpit:1025` inside Docker, and shows captured message
 
 `config/config.php` accepts `DB_HOST`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`, and an absolute `APP_URL`. Compose sets `APP_URL=http://localhost:8080/autotrackplus`. Links use this trusted configured URL, never the incoming Host header. Use the hostname `localhost` consistently in the browser so session cookies match.
 
-SMTP uses `SMTP_HOST`, `SMTP_PORT`, and `MAIL_FROM`. Authenticated SMTP additionally uses `SMTP_TLS=1`, `SMTP_USER`, and `SMTP_PASSWORD` (credentials require STARTTLS). Production needs HTTPS, a real SMTP service, a dedicated MySQL application account with a strong password, and secrets supplied outside version control. HTTPS `APP_URL` enables Secure session cookies. Keep the local HTTP setting for local Docker testing. No hosting or deployment is configured by this change.
+Local SMTP uses `SMTP_HOST`, `SMTP_PORT`, and `MAIL_FROM`. Authenticated SMTP additionally uses `SMTP_TLS=1`, `SMTP_USER`, and `SMTP_PASSWORD` (credentials require STARTTLS). Production uses Brevo’s HTTPS API with `BREVO_API_KEY` and a Brevo-verified `MAIL_FROM`; it does not use SMTP. Production also needs HTTPS, a dedicated MySQL application account with a strong password, and secrets supplied outside version control. HTTPS `APP_URL` enables Secure session cookies. Keep the local HTTP setting for local Docker testing. No hosting or deployment is configured by this change.
 
 ## Verification
+
+```sh
+docker compose exec app php tests/mailer-test.php
+```
+
+The mailer test uses a mocked Brevo request and a temporary local SMTP server. It sends no email externally and does not connect to a database. Brevo accepting a request does not guarantee final delivery; check delivery events in Brevo after configuring production. Review Brevo transactional click-tracking and log settings before sending password links: those links contain single-use tokens and may be rewritten or recorded by the provider.
+
+The broader integration suite uses an isolated test database:
 
 ```sh
 docker compose exec app php tests/auth-integration.php
@@ -64,9 +72,9 @@ PHP files can be linted inside the app container. Apache denies HTTP access to c
 The Docker image includes the application and listens on Railway's `PORT` (default 80 locally). The app remains at `/autotrackplus`. Railway terminates HTTPS at its proxy; set `APP_URL` to the exact external HTTPS URL including that path. The Docker image and `.dockerignore` contain no credentials. Set secrets in Railway service variables, not in source files. See `.env.example` for the required variable names.
 
 1. Provision a Railway MySQL service with a persistent volume and backups. Use its private-network host and port from the MySQL service's `MYSQLHOST` and `MYSQLPORT` reference variables; set `DB_NAME`, `DB_USER`, and `DB_PASSWORD` from the corresponding database settings. Prefer a dedicated application account; migrations and initialization need DDL privileges. Railway's MySQL template may expose root credentials: provision a less-privileged account for normal app use. Keep MySQL private. If using a provider requiring TLS, set `DB_SSL_CA` to the absolute path of its CA certificate in the container and verify the provider's hostname/certificate. Private networking alone does not establish database TLS.
-2. Configure `APP_ENV=production`, `APP_URL=https://your-domain/autotrackplus`, `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, and `DB_PASSWORD`. Set `SMTP_HOST`, `SMTP_PORT`, `SMTP_TLS=1`, `SMTP_USER`, `SMTP_PASSWORD`, and a verified `MAIL_FROM`. The SMTP transport supports STARTTLS and AUTH LOGIN; use a provider that supports both and test outbound connectivity and delivery. Mailpit is only for local development. Production configuration fails closed if required values are absent.
+2. Configure `APP_ENV=production`, `APP_URL=https://your-domain/autotrackplus`, `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, and `DB_PASSWORD`. Set `BREVO_API_KEY` to a Brevo API key (not an SMTP key) and `MAIL_FROM` to a sender address verified in Brevo. Brevo transactional sending must be enabled on the account. Store the key as a Railway secret; never put it in the repository or logs. Production sends via `https://api.brevo.com/v3/smtp/email` over HTTPS; no `SMTP_*` variables are needed there. Mailpit remains the local development transport. Production configuration fails closed if required values are absent.
 3. For a **new, empty production database only**, use an authorized Railway service shell to run `php bin/init-database.php` and then `php bin/migrate.php`. Initialization refuses a nonempty database and creates no default admin. For an existing database, back up and restore it through a reviewed migration procedure and run only `php bin/migrate.php`; do not run initialization. The migration is explicit, not automatic at container startup.
-4. In the service shell, after confirming the person's identity and email, run `php bin/create-first-admin.php --code=123456 --email=confirmed@example.com --first-name=First --last-name=Last --confirm-identity` with the real values. It refuses if an admin already exists and emails a 30-minute single-use password link. If delivery fails after account creation, correct SMTP and retry with `php bin/issue-password-setup.php --code=... --email=... --confirm-identity`. For imported accounts, use that latter command after validating the destination against trusted records. Never use the local seeded admin email in production.
+4. In the service shell, after confirming the person's identity and email, run `php bin/create-first-admin.php --code=123456 --email=confirmed@example.com --first-name=First --last-name=Last --confirm-identity` with the real values. It refuses if an admin already exists and emails a 30-minute single-use password link. If delivery fails after account creation, correct the Brevo configuration and retry with `php bin/issue-password-setup.php --code=... --email=... --confirm-identity`. For imported accounts, use that latter command after validating the destination against trusted records. Never use the local seeded admin email in production.
 5. Verify login, reset email, logout, restricted paths, HTTPS cookies, and a backup restore before going live. The production password denylist is small; add a comprehensive compromised-password check and assess MFA for administrators. Configure monitoring and appropriate rate limits at the edge; the app's IP throttling uses `REMOTE_ADDR`, which may identify a proxy. Only trust forwarded client IPs when the proxy boundary has been explicitly configured and tested.
 
 With `APP_ENV=production`, PHP sessions use the `app_sessions` MySQL table created by migration 002. This supports multiple app instances and survives container restarts. Session contents include login and password-setup state, so protect database access and backups; expiration and revocation remain enforced by the app. MySQL must support advisory locks on the same connection. Local Compose retains file sessions by default; set `SESSION_DRIVER=mysql` after applying migration 002 to exercise the shared handler locally. Session garbage collection removes expired entries probabilistically; monitor table growth.
