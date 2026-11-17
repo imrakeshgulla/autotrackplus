@@ -23,7 +23,7 @@ For local testing, issue an invitation to the seeded address (Mailpit captures i
 
 ```sh
 docker compose exec app php bin/issue-password-setup.php \
-  --code=999999 --email=admin@example.com --confirm-identity
+  --code --email=admin@example.com --confirm-identity
 ```
 
 Open http://localhost:8025, open the setup email, and follow its link. Choose and confirm a unique password of 15–128 characters. Return to the login page and sign in with `999999` and that password. The link expires after 30 minutes and works once; rerun the command if needed. No password is printed, emailed, or stored in plaintext.
